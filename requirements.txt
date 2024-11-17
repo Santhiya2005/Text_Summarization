@@ -26,3 +26,7 @@ itsdangerous==2.1.2
 # Caching (optional)
 Flask-Caching==2.1.0
 
+transformers==4.35.0
+
+
+
