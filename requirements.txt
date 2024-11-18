@@ -1,29 +1,6 @@
-# Web framework
-Flask==2.3.2
-
-# Database
-SQLAlchemy==2.0.16
-psycopg2==2.9.6  # for PostgreSQL (use mysql-connector-python for MySQL)
-
-# Authentication (optional)
-Flask-Login==0.6.3
-Flask-Bcrypt==1.0.1
-
-# Form handling
-Flask-WTF==1.1.1
-WTForms==3.0.1
-
-# Environment variables
-python-dotenv==1.0.0
-
-# APIs (optional)
-requests==2.31.0
-
-# Security
-itsdangerous==2.1.2
-
-# Caching (optional)
-Flask-Caching==2.1.0
-
-transformers==4.35.0
-
+joblib       
+pandas 
+scikit-learn
+Flask
+numpy
+gunicorn
