@@ -4,3 +4,5 @@ scikit-learn
 Flask
 numpy
 gunicorn
+nltk
+flask

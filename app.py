@@ -1,3 +1,7 @@
+import nltk
+nltk.download('punkt')  # Download the Punkt tokenizer models
+nltk.download('stopwords')  # Download stopwords list
+
 from flask import Flask, request, jsonify, render_template
 from nltk.tokenize import sent_tokenize
 from heapq import nlargest
