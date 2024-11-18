@@ -7,19 +7,21 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 30px;
-            background-color: #f4f7f6;
-        }
-        h1 {
-            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
         }
         .container {
-            max-width: 600px;
+            width: 80%;
             margin: auto;
-            background-color: #fff;
             padding: 20px;
+            background-color: #fff;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
         }
         textarea {
             width: 100%;
@@ -27,14 +29,19 @@
             padding: 10px;
             font-size: 16px;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            resize: vertical;
         }
         button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
             background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
         }
         button:hover {
@@ -42,33 +49,61 @@
         }
         .result {
             margin-top: 20px;
-        }
-        .result h2 {
-            color: #333;
-        }
-        .result p {
-            font-size: 18px;
-            color: #555;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
+
     <div class="container">
         <h1>Text Summarization</h1>
-        <form action="/summarize" method="POST">
-            <label for="input_text">Enter Text:</label><br>
-            <textarea name="input_text" id="input_text" placeholder="Enter your text here..."></textarea><br><br>
-            <button type="submit">Summarize</button>
+        <form id="summaryForm">
+            <label for="textInput">Enter Text to Summarize:</label>
+            <textarea id="textInput" placeholder="Enter text here..."></textarea>
+            <button type="submit">Summarize Text</button>
         </form>
 
-        {% if original_text %}
-        <div class="result">
-            <h2>Original Text:</h2>
-            <p>{{ original_text }}</p>
-            <h2>Summary:</h2>
-            <p>{{ summary_text }}</p>
+        <div id="summaryResult" class="result" style="display:none;">
+            <h3>Summary:</h3>
+            <p id="summaryText"></p>
         </div>
-        {% endif %}
     </div>
+
+    <script>
+        // Form submission and API call
+        document.getElementById("summaryForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const textInput = document.getElementById("textInput").value;
+
+            if (!textInput) {
+                alert("Please enter some text to summarize.");
+                return;
+            }
+
+            const response = await fetch("http://127.0.0.1:5000/summarize", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    text: textInput,
+                    num_sentences: 3  // You can adjust this to change the number of summary sentences
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.summary) {
+                document.getElementById("summaryResult").style.display = "block";
+                document.getElementById("summaryText").textContent = result.summary;
+            } else {
+                alert("There was an error summarizing the text.");
+            }
+        });
+    </script>
 </body>
 </html>

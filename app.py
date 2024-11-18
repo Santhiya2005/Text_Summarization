@@ -1,47 +1,71 @@
-from flask import Flask, render_template, request
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from flask import Flask, request, jsonify, render_template
+from nltk.tokenize import sent_tokenize
+from heapq import nlargest
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+import string
+import os
 
+# Initialize Flask app
 app = Flask(__name__)
 
-# Load tokenizer and model for summarization
-tokenizer = AutoTokenizer.from_pretrained("Yihui/t5-small-text-summary-generation")
-model = AutoModelForSeq2SeqLM.from_pretrained("Yihui/t5-small-text-summary-generation")
-
 # Function to summarize text
-def summarize_text(text, max_length=50, min_length=25, num_beams=2):
-    # Tokenize the input text
-    inputs = tokenizer.encode("summarize: " + text, return_tensors="pt", max_length=512, truncation=True)
+def summarize_text(text, num_sentences=3):
+    stop_words = set(stopwords.words("english"))
+    words = word_tokenize(text.lower())
+    
+    # Remove punctuation and stopwords, and count word frequencies
+    word_frequencies = {}
+    for word in words:
+        if word not in stop_words and word not in string.punctuation:
+            if word not in word_frequencies:
+                word_frequencies[word] = 1
+            else:
+                word_frequencies[word] += 1
 
-    # Generate summary
-    summary_ids = model.generate(
-        inputs,
-        max_length=max_length,
-        min_length=min_length,
-        length_penalty=2.0,
-        num_beams=num_beams,
-        early_stopping=True
-    )
+    # Normalize word frequencies
+    max_frequency = max(word_frequencies.values())
+    for word in word_frequencies:
+        word_frequencies[word] /= max_frequency
 
-    # Decode the generated summary
-    summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+    # Tokenize sentences and score them based on word frequencies
+    sentences = sent_tokenize(text)
+    sentence_scores = {}
+    for sentence in sentences:
+        for word in word_tokenize(sentence.lower()):
+            if word in word_frequencies:
+                if sentence not in sentence_scores:
+                    sentence_scores[sentence] = word_frequencies[word]
+                else:
+                    sentence_scores[sentence] += word_frequencies[word]
+
+    # Select the top N sentences
+    summary_sentences = nlargest(num_sentences, sentence_scores, key=sentence_scores.get)
+    summary = " ".join(summary_sentences)
     return summary
 
-# Route for the home page
+# Route for the home page (serving index.html)
 @app.route('/')
-def index():
+def home():
     return render_template('index.html')
 
-# Route to handle form submission and summarize text
+# Flask route for text summarization
 @app.route('/summarize', methods=['POST'])
 def summarize():
-    # Get the text from the form
-    input_text = request.form['input_text']
+    data = request.get_json()
+    if 'text' not in data:
+        return jsonify({"error": "Please provide 'text' in the request body"}), 400
+    
+    text = data['text']
+    num_sentences = data.get('num_sentences', 3)  # Default to 3 sentences if not provided
+    summary = summarize_text(text, num_sentences=num_sentences)
+    return jsonify({"summary": summary})
 
-    # Summarize the text
-    summary = summarize_text(input_text)
-
-    # Render the result on a new page
-    return render_template('index.html', original_text=input_text, summary_text=summary)
-
+# Run the Flask app
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    # Ensure the "templates" folder exists for serving HTML files
+    if not os.path.exists('templates'):
+        os.makedirs('templates')
+    
+    # Place your index.html file in the 'templates' directory
+    app.run(debug=True)
